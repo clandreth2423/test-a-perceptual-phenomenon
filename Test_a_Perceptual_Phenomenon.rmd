@@ -1,0 +1,304 @@
+---
+title: "Test a Perceptual Phenomenon"
+author: "Chad Landreth"
+date: "9/23/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Question 1:
+**What is our independent variable? What is our dependent variable?**
+
+The **independent variable** is the condition in which the words are displayed, which can be either **congruent** (the color matches the word) or **incongruent** (the color does not match the word).
+
+The **dependent variable** is the time it takes for each participant to name the ink color for each word displayed.
+
+
+
+# Question 2:
+**What is the appropriate set of hypotheses for this task? What kind of statistical test do you expect to perform? Justify your choices.**
+
+This experiment measures two different conditions on the exact same participants. The conditions are whether the displayed word is congruent or incongruent. The design for this type of experiment is **Pretest-Posttest**. We can treat the time it takes to name the ink color for the congruent condition as the **baseline** and that for the incongruent condition as the **treatment**.
+
+An appropriate set of hypotheses for this experiment is as follows:
+
+Null Hypothesis (**Ho**): M_con = M_inc
+
+Alt Hypothesis (**Ha**):  M_con <> M_inc
+
+where m_con is the means of the time it took for the congruent condition, and m_inc is the means of the time it took for the incongruent condition.
+
+For this set of hypotheses, a two-tailed, dependent t-test will be performed.
+
+There is possibly another appropriate set of hypotheses for this experiment. Intuitively, the incongruent condition adds more complication for the participants, and thus should result in a longer average time for the participant to name the ink color. With this intuition, this set of hypothesis is as follows:
+
+**Ho**: M_con >= M_inc
+
+**Ha**: M_con < M_inc
+
+For this set of hypothesis, a one-tailed, dependent t-test will be performed.
+
+
+
+# Question 3:
+**Report some descriptive statistics regarding this dataset. Include at least one measure of central tendency and at least one measure of variability.**
+
+```{r}
+ds <- read.csv("stroopdata.csv", header = TRUE)
+```
+
+```{r}
+mean_con <- sum(ds$Congruent)/length(ds$Congruent)
+mean_inc <- sum(ds$Incongruent)/length(ds$Incongruent)
+med_con <- median(ds$Congruent)
+med_inc <- median(ds$Incongruent)
+```
+```{r, echo=FALSE}
+cat("Congruent:\n", 
+    "  Mean = ", mean_con, "\n", 
+    "  Median = ", med_con, "\n\n")
+cat("Incongruent:\n", 
+    "  Mean = ", mean_inc, "\n", 
+    "  Median = ", med_inc)
+```
+
+```{r}
+var_con <- sum((ds$Congruent - mean_con)^2) / (length(ds$Congruent) - 1)
+var_inc <- sum((ds$Incongruent - mean_inc)^2) / (length(ds$Incongruent) - 1)
+stdev_con <- sqrt(var_con)
+stdev_inc <- sqrt(var_inc)
+```
+```{r, echo=FALSE}
+cat("Congruent:\n", 
+    "  Variance = ", var_con, "\n", 
+    "  Standard Deviation = ", stdev_con, "\n\n")
+cat("Incongruent:\n", 
+    "  Variance = ", var_inc, "\n", 
+    "  Standard Deviation = ", stdev_inc)
+```
+
+
+
+# Question 4:
+**Provide one or two visualizations that show the distribution of the sample data. Write one or two sentences noting what you observe about the plot or plots.**
+
+```{r, echo=FALSE}
+library(ggplot2)
+```
+```{r}
+min_limit <- min(c(min(ds$Congruent)-1,min(ds$Incongruent)-1))
+max_limit <- max(c(max(ds$Congruent)+1,max(ds$Incongruent)+1))
+```
+
+The min_limit and max_limit variables are to standardize the x-axis and y-axis, where applicable, between the congruent and incongruent conditions.
+
+```{r}
+ggplot(aes(x = Congruent), data = ds) + 
+  geom_histogram(binwidth = 2, color = "darkblue", fill = "white", size = 1) + 
+  coord_cartesian(xlim = c(min_limit,max_limit)) + 
+  geom_vline(xintercept = mean_con, color = "darkblue", 
+             linetype = "dashed", size = 1.5) + 
+  geom_vline(xintercept = mean_inc, color = "darkred", 
+             linetype = "dashed", size = 1.5)
+```
+
+The above histogram shows the distribution of the participants' times for the congruent condition. The blue vertical dashed line represents the mean for the congruent condition, and the red vertical dashed line represents the mean for the incongruent condition. The frequencies seem to weigh a bit heavily on the left and tails off to the right. All but the rightmost bin lie to the left of the mean for the incongruent condition.
+
+```{r}
+ggplot(aes(x = Incongruent), data = ds) + 
+  geom_histogram(binwidth = 2, color = "darkred", fill = "white", size = 1) + 
+  coord_cartesian(xlim = c(min_limit,max_limit)) + 
+  geom_vline(xintercept = mean_inc, color = "darkred", 
+             linetype = "dashed", size = 1.5) + 
+  geom_vline(xintercept = mean_con, color = "darkblue", 
+             linetype = "dashed", size = 1.5)
+```
+
+The above histogram shows the distribution of the participants' times for the incongruent condition. The red vertical dashed line represents the mean for the incongruent condition, and the blue vertical dashed line represents the mean for the congruent condition. The frequencies seem to weigh a bit heavily on the left and tails off to the right. All bins lie to the right of the mean for the congruent condition.
+
+```{r}
+ggplot(aes(x = Congruent, y = Incongruent), data = ds) + 
+  geom_point() + 
+  coord_cartesian(xlim = c(min_limit,max_limit), 
+                  ylim = c(min_limit,max_limit)) + 
+  geom_abline(intercept = 0, slope = 1, color = "#339900", 
+              linetype = "dashed", size = 1)
+```
+
+The above scatterplot represents each participants' times for the congruent and incongruent conditions as a single point. The congruent time measurements are represented by the x-axis, while the incongruent time measurements are represented by the y-axis. The green dashed line shows the boundary where the congruent time and the incongruent time are equal. All points appear above this boundary, which means that for every participant in the experiment, the incongruent time was larger than the congruent time.
+
+
+
+# Question 5:
+**Now, perform the statistical test and report your results. What is your confidence level and your critical statistic value? Do you reject the null hypothesis or fail to reject it? Come to a conclusion in terms of the experiment task. Did the results match up with your expectations**
+
+As mentioned previously, two statistical tests will be performed on the results of this experiment: 1. the two-tailed t-test and 2. the one-tailed t-test. In each statistical test, each of the three confidence levels will be applied for alphas 0.05, 0.01, and 0.001.
+
+```{r}
+df_inc = length(ds$Incongruent - 1)
+obs_diff <- ds$Incongruent - ds$Congruent
+mean_diff <- sum(obs_diff) / length(ds$Incongruent)
+stdev_diff <- sqrt(sum((obs_diff - mean_diff)^2) / (df_inc))
+std_error <- stdev_diff / sqrt(length(ds$Incongruent))
+t_stat <- (mean_inc - mean_con) / (stdev_diff / sqrt(df_inc))
+```
+```{r, echo=FALSE}
+cat("Degrees of Freedom for Incongruent = ", df_inc, "\n")
+cat("Mean of Differences = ", mean_diff, "\n")
+cat("Standard Deviation = ", stdev_diff, "\n")
+cat("Standard Error = ", std_error, "\n")
+cat("t-Statistical = ", t_stat, "\n")
+```
+
+
+# The two-tailed t-test
+
+The set of hypoteses for this test are:
+
+**Ho**: M_con = M_inc
+
+**Ha**: M_con <> M_inc
+
+**alpha = 0.05**
+
+The confidence level for this alpha is 95%, and the p-value is 0.025.
+
+The t-critical values for both conditions are -2.064 and 2.064.
+
+```{r}
+t_crit = 2.064
+margin_of_error <- t_crit * std_error
+conf_interval_lower <- mean_con - margin_of_error
+conf_interval_upper <- mean_con + margin_of_error
+```
+```{r, echo=FALSE}
+cat("Margin of Error = ", margin_of_error, "\n\n")
+cat("Confidence Interval = (", conf_interval_lower, ", ", conf_interval_upper, ")\n")
+cat("Incongruent Mean = ", mean_inc, "\n\n")
+cat("t-Critical = (", -(t_crit), ", ", t_crit, ")\n")
+cat("t-Statistical = ", t_stat, "\n")
+```
+
+Since the t-statistical value lies outside of the t-critical values and the mean of the incongruent condition lies outside of the confidence interval, we can **reject the null hypothesis**.
+
+**alpha = 0.01**
+
+The confidence level for this alpha is 99%, and the p-value is 0.005.
+
+The t-critical values for both conditions are -2.797 and 2.797.
+
+```{r}
+t_crit = 2.797
+margin_of_error <- t_crit * std_error
+conf_interval_lower <- mean_con - margin_of_error
+conf_interval_upper <- mean_con + margin_of_error
+```
+```{r, echo=FALSE}
+cat("Margin of Error = ", margin_of_error, "\n\n")
+cat("Confidence Interval = (", conf_interval_lower, ", ", conf_interval_upper, ")\n")
+cat("Incongruent Mean = ", mean_inc, "\n\n")
+cat("t-Critical = (", -(t_crit), ", ", t_crit, ")\n")
+cat("t-Statistical = ", t_stat, "\n")
+```
+
+Since the t-statistical value lies outside of the t-critical values and the mean of the incongruent condition lies outside of the confidence interval, we can **reject the null hypothesis**.
+
+**alpha = 0.001**
+
+The confidence level for this alpha is 99.9%, and the p-value is 0.0005.
+
+The t-critical values for both conditions are -3.745 and 3.745.
+
+```{r}
+t_crit = 3.745
+margin_of_error <- t_crit * std_error
+conf_interval_lower <- mean_con - margin_of_error
+conf_interval_upper <- mean_con + margin_of_error
+```
+```{r, echo=FALSE}
+cat("Margin of Error = ", margin_of_error, "\n\n")
+cat("Confidence Interval = (", conf_interval_lower, ", ", conf_interval_upper, ")\n")
+cat("Incongruent Mean = ", mean_inc, "\n\n")
+cat("t-Critical = (", -(t_crit), ", ", t_crit, ")\n")
+cat("t-Statistical = ", t_stat, "\n")
+```
+
+Since the t-statistical value lies outside of the t-critical values and the mean of the incongruent condition lies outside of the confidence interval, we can **reject the null hypothesis**.
+
+# The one-tailed t-test
+
+The set of hypoteses for this test are:
+
+**Ho**: M_con >= M_inc
+
+**Ha**: M_con < M_inc
+
+**alpha = 0.05**
+
+The confidence level for this alpha is 90%, and the p-value is 0.05.
+
+The t-critical value for the congruent condition is 1.711.
+
+```{r}
+t_crit = 1.711
+margin_of_error <- t_crit * std_error
+conf_interval_upper <- mean_con + margin_of_error
+```
+```{r, echo=FALSE}
+cat("Margin of Error = ", margin_of_error, "\n\n")
+cat("Confidence Interval <= ", conf_interval_upper, "\n")
+cat("Incongruent Mean = ", mean_inc, "\n\n")
+cat("t-Critical = ", t_crit, "\n")
+cat("t-Statistical = ", t_stat, "\n")
+```
+
+Since the t-statistical value is greater than the t-critical value and the mean of the incongruent condition is greater than the confidence interval, we can **reject the null hypothesis**.
+
+**alpha = 0.01**
+
+The confidence level for this alpha is 98%, and the p-value is 0.01.
+
+The t-critical value for the congruent condition is 2.492.
+
+```{r}
+t_crit = 2.492
+margin_of_error <- t_crit * std_error
+conf_interval_upper <- mean_con + margin_of_error
+```
+```{r, echo=FALSE}
+cat("Margin of Error = ", margin_of_error, "\n\n")
+cat("Confidence Interval <= ", conf_interval_upper, "\n")
+cat("Incongruent Mean = ", mean_inc, "\n\n")
+cat("t-Critical = ", t_crit, "\n")
+cat("t-Statistical = ", t_stat, "\n")
+```
+
+Since the t-statistical value is greater than the t-critical value and the mean of the incongruent condition is greater than the confidence interval, we can **reject the null hypothesis**.
+
+**alpha = 0.001**
+
+The confidence level for this alpha is 99.8%, and the p-value is 0.001.
+
+The t-critical value for the congruent condition is 3.467.
+
+```{r}
+t_crit = 3.467
+margin_of_error <- t_crit * std_error
+conf_interval_upper <- mean_con + margin_of_error
+```
+```{r, echo=FALSE}
+cat("Margin of Error = ", margin_of_error, "\n\n")
+cat("Confidence Interval <= ", conf_interval_upper, "\n")
+cat("Incongruent Mean = ", mean_inc, "\n\n")
+cat("t-Critical = ", t_crit, "\n")
+cat("t-Statistical = ", t_stat, "\n")
+```
+
+Since the t-statistical value is greater than the t-critical value and the mean of the incongruent condition is greater than the confidence interval, we can **reject the null hypothesis**.
+
+# Conclusion:
+
+For the results of this experiment, two separate statistical tests with three different confidence levels each were performed. In every case, we were able to **reject the null hypothesis** given. With these statistical tests, along with the expectations from the histograms and scatter plot above, we can conclude with a high level of confidence that the time it takes for a participant to name an ink color that does not match the printed word color (the incongruent condition) is greater than that for an ink color that matches the printed word color (the congruent condition).
